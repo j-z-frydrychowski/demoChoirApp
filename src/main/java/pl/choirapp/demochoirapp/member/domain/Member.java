@@ -9,6 +9,9 @@ import lombok.Setter;
 import java.util.Set;
 import java.util.UUID;
 
+import pl.choirapp.demochoirapp.member.domain.MemberRole;
+import pl.choirapp.demochoirapp.member.domain.VoiceType;
+
 @Entity // mapowanie klasy na bazę danych
 @Table(name = "members") // nazwa tabeli w bazie danych
 @Getter
@@ -40,4 +43,15 @@ public class Member {
     @ElementCollection(fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)
     private Set<MemberRole> roles; //dodajemy w ten sposob bo jeden uzytkownik moze miec wiecej niz jedna role
+
+    static Member create(String firstName, String lastName, String email, String password, VoiceType voiceType) {
+        Member member = new Member();
+        member.setFirstName(firstName);
+        member.setLastName(lastName);
+        member.setEmail(email);
+        member.setPassword(password);
+        member.setVoiceType(voiceType);
+        member.setRoles(Set.of(MemberRole.CHORISTER));
+        return member;
+    }
 }
