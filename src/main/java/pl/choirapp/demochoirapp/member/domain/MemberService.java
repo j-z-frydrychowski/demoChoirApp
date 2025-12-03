@@ -8,6 +8,7 @@ import pl.choirapp.demochoirapp.infrastructure.security.JwtService;
 import pl.choirapp.demochoirapp.member.dto.MemberLoginRequest;
 import pl.choirapp.demochoirapp.member.dto.MemberLoginResponse;
 import pl.choirapp.demochoirapp.member.dto.MemberRegisterRequest;
+import pl.choirapp.demochoirapp.member.dto.MemberSecurityDto;
 
 import java.util.UUID;
 
@@ -53,5 +54,17 @@ class MemberService {
         // 3. Jeśli przeszło -> Generujemy odpowiedź
         String jwtToken = jwtService.generateToken(member.getId(), member.getEmail());
         return new MemberLoginResponse(jwtToken);
+    }
+
+    // Importuj MemberSecurityDto
+    MemberSecurityDto findByEmail(String email) {
+        return memberRepository.findByEmail(email)
+                .map(member -> new MemberSecurityDto(
+                        member.getId(),
+                        member.getEmail(),
+                        member.getPassword(),
+                        member.getRoles().stream().map(Enum::name).collect(java.util.stream.Collectors.toSet())
+                ))
+                .orElseThrow(() -> new InvalidCredentialsException()); // Lub UsernameNotFoundException
     }
 }

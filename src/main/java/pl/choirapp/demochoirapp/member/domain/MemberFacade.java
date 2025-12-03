@@ -5,6 +5,7 @@ import org.springframework.stereotype.Component;
 import pl.choirapp.demochoirapp.member.dto.MemberLoginRequest;
 import pl.choirapp.demochoirapp.member.dto.MemberLoginResponse;
 import pl.choirapp.demochoirapp.member.dto.MemberRegisterRequest;
+import pl.choirapp.demochoirapp.member.dto.MemberSecurityDto;
 
 import java.util.UUID;
 
@@ -19,5 +20,10 @@ public class MemberFacade {
 
     public MemberLoginResponse login(MemberLoginRequest request) {
         return memberService.login(request);
+    }
+
+    // ... wewnątrz MemberFacade ...
+    public MemberSecurityDto findByEmail(String email) {
+        return memberService.findByEmail(email);
     }
 }
