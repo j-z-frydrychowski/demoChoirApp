@@ -2,10 +2,7 @@ package pl.choirapp.demochoirapp.member.domain;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import pl.choirapp.demochoirapp.member.dto.MemberLoginRequest;
-import pl.choirapp.demochoirapp.member.dto.MemberLoginResponse;
-import pl.choirapp.demochoirapp.member.dto.MemberRegisterRequest;
-import pl.choirapp.demochoirapp.member.dto.MemberSecurityDto;
+import pl.choirapp.demochoirapp.member.dto.*;
 
 import java.util.UUID;
 
@@ -25,5 +22,9 @@ public class MemberFacade {
     // ... wewnątrz MemberFacade ...
     public MemberSecurityDto findByEmail(String email) {
         return memberService.findByEmail(email);
+    }
+
+    public MemberResponse getMemberByEmail(String email) {
+        return memberService.getMemberByEmail(email);
     }
 }

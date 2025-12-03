@@ -5,10 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import pl.choirapp.demochoirapp.infrastructure.security.JwtService;
-import pl.choirapp.demochoirapp.member.dto.MemberLoginRequest;
-import pl.choirapp.demochoirapp.member.dto.MemberLoginResponse;
-import pl.choirapp.demochoirapp.member.dto.MemberRegisterRequest;
-import pl.choirapp.demochoirapp.member.dto.MemberSecurityDto;
+import pl.choirapp.demochoirapp.member.dto.*;
 
 import java.util.UUID;
 
@@ -66,5 +63,19 @@ class MemberService {
                         member.getRoles().stream().map(Enum::name).collect(java.util.stream.Collectors.toSet())
                 ))
                 .orElseThrow(() -> new InvalidCredentialsException()); // Lub UsernameNotFoundException
+    }
+
+    MemberResponse getMemberByEmail(String email) {
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new InvalidCredentialsException()); // Lub inny wyjątek, np. NotFound
+
+        return new MemberResponse(
+                member.getId(),
+                member.getFirstName(),
+                member.getLastName(),
+                member.getEmail(),
+                member.getVoiceType(),
+                member.getRoles()
+        );
     }
 }

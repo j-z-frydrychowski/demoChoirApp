@@ -64,7 +64,7 @@ public class JwtService {
         return claimsResolver.apply(claims);
     }
 
-    //sprawdzanie podpisu
+    //sprawdzenie podpisu
     private Claims extractAllClaims(String token) {
         return Jwts.parser()
                 .verifyWith(getSignInKey())

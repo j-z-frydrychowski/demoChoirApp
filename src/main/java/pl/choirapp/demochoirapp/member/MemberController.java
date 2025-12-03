@@ -9,6 +9,8 @@ import pl.choirapp.demochoirapp.member.dto.MemberRegisterRequest;
 import pl.choirapp.demochoirapp.member.dto.MemberLoginRequest;
 import pl.choirapp.demochoirapp.member.dto.MemberLoginResponse;
 import java.util.UUID;
+import org.springframework.security.core.Authentication;
+import pl.choirapp.demochoirapp.member.dto.MemberResponse;
 
 @RestController
 @RequestMapping("/api/members")
@@ -26,5 +28,15 @@ class MemberController {
     @PostMapping("/login")
     MemberLoginResponse login(@RequestBody @Valid MemberLoginRequest request) {
         return memberFacade.login(request);
+    }
+
+    @GetMapping("/me")
+    MemberResponse getMember(Authentication authentication) {
+        // 1. Spring Security wstrzykuje nam obiekt Authentication
+        // 2. Pobieramy nazwę użytkownika (u nas to email), którą zapisał filtr JWT
+        String userEmail = authentication.getName();
+
+        // 3. Pytamy fasadę o dane tego konkretnego usera
+        return memberFacade.getMemberByEmail(userEmail);
     }
 }
