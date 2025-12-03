@@ -4,6 +4,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import pl.choirapp.demochoirapp.infrastructure.security.JwtService;
 import pl.choirapp.demochoirapp.member.dto.MemberLoginRequest;
 import pl.choirapp.demochoirapp.member.dto.MemberLoginResponse;
 import pl.choirapp.demochoirapp.member.dto.MemberRegisterRequest;
@@ -17,6 +18,7 @@ class MemberService {
 
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
     UUID registerMember(MemberRegisterRequest request) {
         if (memberRepository.existsByEmail(request.email())) {
@@ -49,7 +51,7 @@ class MemberService {
             throw new InvalidCredentialsException();
         }
         // 3. Jeśli przeszło -> Generujemy odpowiedź
-        // TODO: Tutaj w przyszłości wygenerujemy prawdziwy JWT Token
-        return new MemberLoginResponse("DUMMY_TOKEN_FOR_USER_" + member.getId());
+        String jwtToken = jwtService.generateToken(member.getId(), member.getEmail());
+        return new MemberLoginResponse(jwtToken);
     }
 }

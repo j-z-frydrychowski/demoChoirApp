@@ -47,6 +47,11 @@ dependencies {
 
     // Launcher wymagany przez Gradle do uruchomienia testów JUnit 5
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // --- JWT (JSON Web Token) ---
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.5' // Do obsługi JSON
 }
 
 tasks.named('test') {
