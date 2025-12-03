@@ -4,6 +4,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import pl.choirapp.demochoirapp.member.dto.MemberLoginRequest;
+import pl.choirapp.demochoirapp.member.dto.MemberLoginResponse;
 import pl.choirapp.demochoirapp.member.dto.MemberRegisterRequest;
 
 import java.util.UUID;
@@ -34,5 +36,20 @@ class MemberService {
         Member savedMember = memberRepository.save(member);
 
         return savedMember.getId();
+    }
+
+    MemberLoginResponse login(MemberLoginRequest request) {
+        // Szukamy uzytkownika po emailu, jeśli nie znajdzie -> błąd
+        Member member = memberRepository.findByEmail(request.email())
+                .orElseThrow(() -> new InvalidCredentialsException());
+
+        // Sprawdzamy hasło używając matchera
+
+        if (!passwordEncoder.matches(request.password(), member.getPassword())) {
+            throw new InvalidCredentialsException();
+        }
+        // 3. Jeśli przeszło -> Generujemy odpowiedź
+        // TODO: Tutaj w przyszłości wygenerujemy prawdziwy JWT Token
+        return new MemberLoginResponse("DUMMY_TOKEN_FOR_USER_" + member.getId());
     }
 }

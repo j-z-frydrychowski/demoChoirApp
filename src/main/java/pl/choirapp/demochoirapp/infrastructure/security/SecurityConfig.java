@@ -17,15 +17,38 @@ class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+//    @Bean
+//    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+//        http
+//                .csrf(AbstractHttpConfigurer::disable)
+//                .authorizeHttpRequests(auth -> auth
+//                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+//                        .requestMatchers("/api/members/**").permitAll()
+//                        .anyRequest().authenticated()
+//                );
+//        return http.build(); // Placeholder for actual security filter chain configuration
+//    }
+
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(AbstractHttpConfigurer::disable)
+                // 1. Wyłączamy blokadę CSRF (niezbędne dla REST API)
+                .csrf(csrf -> csrf.disable())
+
+                // 2. Konfiguracja uprawnień
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        .requestMatchers("/api/members").permitAll()
+                        // Lista otwartych adresów (BEZ logowania):
+                        .requestMatchers(
+                                "/v3/api-docs/**",       // <--- Kluczowe: tu są definicje (JSON)
+                                "/swagger-ui/**",        // <--- Interfejs graficzny
+                                "/swagger-ui.html",      // <--- Strona startowa
+                                "/api/members/**"        // <--- Nasze endpointy (rejestracja i login)
+                        ).permitAll()
+
+                        // Wszystko inne wymaga logowania
                         .anyRequest().authenticated()
                 );
-        return http.build(); // Placeholder for actual security filter chain configuration
+
+        return http.build();
     }
 }
