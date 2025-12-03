@@ -1,7 +1,7 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '4.0.0'
-    id 'io.spring.dependency-management' version '1.1.7'
+    id 'org.springframework.boot' version '3.3.5' // Zmieniamy 4.0.0 na stabilną wersję 3.x
+    id 'io.spring.dependency-management' version '1.1.6'
 }
 
 group = 'pl.choirapp'
@@ -25,16 +25,27 @@ repositories {
 }
 
 dependencies {
+    // --- GŁÓWNE ZALEŻNOŚCI ---
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
+    implementation 'org.springframework.boot:spring-boot-starter-web' // <-- To naprawiło poprzedni błąd kompilacji
     implementation 'org.springframework.boot:spring-boot-starter-security'
+
+    // Dokumentacja (Swagger)
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
+
+    // Narzędzia
     compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // Bazy danych
     runtimeOnly 'com.h2database:h2'
     runtimeOnly 'org.postgresql:postgresql'
-    annotationProcessor 'org.projectlombok:lombok'
-    testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
-    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+
+    // --- TESTY (TO NAPRAWI TWÓJ OBECNY BŁĄD) ---
+    // Zawiera JUnit Jupiter, Mockito, AssertJ i silniki testowe
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+    // Launcher wymagany przez Gradle do uruchomienia testów JUnit 5
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
