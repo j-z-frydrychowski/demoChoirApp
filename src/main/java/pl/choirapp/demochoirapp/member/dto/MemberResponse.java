@@ -1,6 +1,7 @@
 package pl.choirapp.demochoirapp.member.dto;
 
 import pl.choirapp.demochoirapp.member.domain.MemberRole;
+import pl.choirapp.demochoirapp.member.domain.MemberStatus;
 import pl.choirapp.demochoirapp.member.domain.VoiceType;
 
 import java.util.Set;
@@ -12,5 +13,6 @@ public record MemberResponse(
         String lastName,
         String email,
         VoiceType voiceType,
-        Set<MemberRole> roles
+        Set<MemberRole> roles,
+        MemberStatus status
 ) {}

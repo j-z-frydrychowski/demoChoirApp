@@ -44,6 +44,10 @@ public class Member {
     @Enumerated(EnumType.STRING)
     private Set<MemberRole> roles; //dodajemy w ten sposob bo jeden uzytkownik moze miec wiecej niz jedna role
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private MemberStatus status;
+
     static Member create(String firstName, String lastName, String email, String password, VoiceType voiceType) {
         Member member = new Member();
         member.setFirstName(firstName);
@@ -51,7 +55,10 @@ public class Member {
         member.setEmail(email);
         member.setPassword(password);
         member.setVoiceType(voiceType);
+        member.setStatus(MemberStatus.PENDING);
         member.setRoles(Set.of(MemberRole.CHORISTER));
         return member;
     }
+
+
 }

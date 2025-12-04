@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import pl.choirapp.demochoirapp.infrastructure.security.JwtService;
 import pl.choirapp.demochoirapp.member.dto.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -75,7 +76,30 @@ class MemberService {
                 member.getLastName(),
                 member.getEmail(),
                 member.getVoiceType(),
-                member.getRoles()
+                member.getRoles(),
+                member.getStatus()
         );
+    }
+
+    List<MemberResponse> getAllMembers() {
+        return memberRepository.findAll().stream()
+                .map(member -> new MemberResponse(
+                        member.getId(),
+                        member.getFirstName(),
+                        member.getLastName(),
+                        member.getEmail(),
+                        member.getVoiceType(),
+                        member.getRoles(),
+                        member.getStatus()
+                ))
+                .toList();
+    }
+
+    void activateMember(UUID memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new RuntimeException("Member not found")); // Lepiej użyć własnego wyjątku
+
+        member.setStatus(MemberStatus.ACTIVE);
+        memberRepository.save(member); // W transakcji (@Transactional) Hibernate sam zrobi update, ale save nie zaszkodzi.
     }
 }

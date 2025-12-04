@@ -8,9 +8,12 @@ import pl.choirapp.demochoirapp.member.domain.MemberFacade;
 import pl.choirapp.demochoirapp.member.dto.MemberRegisterRequest;
 import pl.choirapp.demochoirapp.member.dto.MemberLoginRequest;
 import pl.choirapp.demochoirapp.member.dto.MemberLoginResponse;
+
+import java.util.List;
 import java.util.UUID;
 import org.springframework.security.core.Authentication;
 import pl.choirapp.demochoirapp.member.dto.MemberResponse;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/members")
@@ -38,5 +41,18 @@ class MemberController {
 
         // 3. Pytamy fasadę o dane tego konkretnego usera
         return memberFacade.getMemberByEmail(userEmail);
+    }
+
+    @GetMapping
+    @PreAuthorize("hasAnyRole('BOARD', 'CONDUCTOR', 'ADMIN')")// Tylko role BOARD, CONDUCTOR i ADMIN mogą wyświetlić listę członków
+    List<MemberResponse> getAllMembers() {
+        return memberFacade.getAllMembers();
+    }
+
+    @PatchMapping("/{id}/activate")
+    @PreAuthorize("hasAnyRole('BOARD', 'ADMIN')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void activateMember(@PathVariable UUID id) {
+        memberFacade.activateMember(id);
     }
 }

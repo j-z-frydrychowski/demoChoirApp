@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import pl.choirapp.demochoirapp.member.dto.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -19,12 +20,19 @@ public class MemberFacade {
         return memberService.login(request);
     }
 
-    // ... wewnątrz MemberFacade ...
     public MemberSecurityDto findByEmail(String email) {
         return memberService.findByEmail(email);
     }
 
     public MemberResponse getMemberByEmail(String email) {
         return memberService.getMemberByEmail(email);
+    }
+
+    public List<MemberResponse> getAllMembers() {
+        return memberService.getAllMembers();
+    }
+
+    public void activateMember(UUID id) {
+        memberService.activateMember(id);
     }
 }
