@@ -7,9 +7,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import pl.choirapp.demochoirapp.enrollment.domain.EnrollmentFacade;
+import pl.choirapp.demochoirapp.enrollment.dto.EnrollmentResponse;
 import pl.choirapp.demochoirapp.enrollment.dto.SubmitEnrollmentRequest;
 import pl.choirapp.demochoirapp.member.domain.MemberFacade;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -36,5 +38,11 @@ class EnrollmentController {
 
         // 3. Wysyłamy deklarację
         enrollmentFacade.submitEnrollment(eventId, member.id(), request.status());
+    }
+
+    @GetMapping("/{eventId}/enrollments")
+    @PreAuthorize("hasAnyRole('BOARD', 'CONDUCTOR', 'ADMIN')") // Tylko Zarząd widzi listę
+    List<EnrollmentResponse> getEnrollments(@PathVariable UUID eventId) {
+        return enrollmentFacade.getEnrollmentsForEvent(eventId);
     }
 }
