@@ -1,6 +1,7 @@
 package pl.choirapp.demochoirapp.attendance.domain;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import pl.choirapp.demochoirapp.attendance.domain.Attendance;
 import java.util.List;
 import java.util.UUID;
 

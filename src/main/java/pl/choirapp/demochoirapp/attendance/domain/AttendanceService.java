@@ -23,6 +23,7 @@ class AttendanceService {
     private final AttendanceRepository attendanceRepository;
     private final MemberFacade memberFacade; // Potrzebujemy listy ludzi
     private final EventFacade eventFacade;   // Potrzebujemy sprawdzić czy wydarzenie istnieje
+    private final StatisticsService statisticsService;
 
     void updateAttendance(UUID eventId, UpdateAttendanceRequest request) {
         // 1. Walidacja: Czy wydarzenie istnieje? (Fasada rzuci wyjątek jeśli nie)
@@ -52,6 +53,8 @@ class AttendanceService {
 
         // 5. Zapisujemy wszystko jedną paczką (Batch Insert)
         attendanceRepository.saveAll(attendanceList);
+
+        statisticsService.recalculateAllStatistics();
     }
 
     List<AttendanceResponse> getAttendanceForEvent(UUID eventId) {
