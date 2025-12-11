@@ -13,4 +13,10 @@ class GlobalExceptionHandler {
     ResponseEntity<String> handleInvalidCredentials(InvalidCredentialsException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Błędne dane logowania");
     }
+
+    @ExceptionHandler(IllegalStateException.class)
+    ResponseEntity<String> handleIllegalState(IllegalStateException ex) {
+        // Zwracamy kod 409 (Conflict) lub 400 (Bad Request)
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+    }
 }
