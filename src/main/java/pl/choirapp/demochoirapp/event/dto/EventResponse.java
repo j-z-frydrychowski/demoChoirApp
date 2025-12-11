@@ -8,5 +8,6 @@ public record EventResponse(
         UUID id,
         String name,
         EventType type,
-        LocalDateTime startDateTime
+        LocalDateTime startDateTime,
+        LocalDateTime enrollmentDeadline
 ) {}

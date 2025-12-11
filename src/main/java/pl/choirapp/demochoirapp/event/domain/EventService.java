@@ -21,6 +21,7 @@ class EventService {
                 .name(request.name())
                 .type(request.type())
                 .startDateTime(request.startDateTime())
+                .enrollmentDeadline(request.enrollmentDeadline())
                 .build();
 
         return mapToResponse(eventRepository.save(event));
@@ -49,7 +50,8 @@ class EventService {
                 event.getId(),
                 event.getName(),
                 event.getType(),
-                event.getStartDateTime()
+                event.getStartDateTime(),
+                event.getEnrollmentDeadline()
         );
     }
 }

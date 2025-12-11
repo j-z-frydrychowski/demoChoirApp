@@ -1,4 +1,4 @@
-package pl.choirapp.demochoirapp.event.domain;
+package pl.choirapp.demochoirapp.enrollment.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -7,27 +7,27 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "events")
+@Table(name = "enrollments")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-class Event {
+class Enrollment {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(nullable = false)
-    private String name;
+    private UUID eventId;
+
+    @Column(nullable = false)
+    private UUID memberId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private EventType type;
+    private EnrollmentStatus status;
 
-    @Column(nullable = false)
-    private LocalDateTime startDateTime;
-
-    @Column(nullable = false)
-    private LocalDateTime enrollmentDeadline;
+    private LocalDateTime decisionDate; // Kiedy podjął decyzję
 }
