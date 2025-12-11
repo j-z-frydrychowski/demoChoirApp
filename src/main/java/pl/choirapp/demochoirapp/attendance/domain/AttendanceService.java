@@ -3,12 +3,14 @@ package pl.choirapp.demochoirapp.attendance.domain;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import pl.choirapp.demochoirapp.attendance.dto.AttendanceResponse;
 import pl.choirapp.demochoirapp.attendance.dto.UpdateAttendanceRequest;
 import pl.choirapp.demochoirapp.event.domain.EventFacade;
 import pl.choirapp.demochoirapp.member.domain.MemberFacade;
 import pl.choirapp.demochoirapp.member.dto.MemberResponse;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -50,5 +52,36 @@ class AttendanceService {
 
         // 5. Zapisujemy wszystko jedną paczką (Batch Insert)
         attendanceRepository.saveAll(attendanceList);
+    }
+
+    List<AttendanceResponse> getAttendanceForEvent(UUID eventId) {
+        // 1. Sprawdzamy czy event istnieje
+        eventFacade.getEventById(eventId);
+
+        // 2. Pobieramy wszystkich członków
+        List<MemberResponse> allMembers = memberFacade.getAllMembers();
+
+        // 3. Pobieramy zapisane obecności i mapujemy je dla szybkiego dostępu (Klucz: memberId, Wartość: Status)
+        Map<UUID, AttendanceStatus> attendanceMap = attendanceRepository.findAllByEventId(eventId).stream()
+                .collect(Collectors.toMap(
+                        Attendance::getMemberId,
+                        Attendance::getStatus
+                ));
+
+        // 4. Łączymy dane (Left Join: Members + Attendance)
+        return allMembers.stream()
+                .map(member -> {
+                    // Pobierz status z mapy lub ustaw ABSENT, jeśli nie znaleziono
+                    AttendanceStatus status = attendanceMap.getOrDefault(member.id(), AttendanceStatus.ABSENT);
+
+                    return new AttendanceResponse(
+                            member.id(),
+                            member.firstName(),
+                            member.lastName(),
+                            member.voiceType(),
+                            status
+                    );
+                })
+                .toList();
     }
 }

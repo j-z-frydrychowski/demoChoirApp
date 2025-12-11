@@ -1,4 +1,4 @@
-package pl.choirapp.demochoirapp.attendance;
+package pl.choirapp.demochoirapp.attendance.domain;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -6,8 +6,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import pl.choirapp.demochoirapp.attendance.domain.AttendanceFacade;
+import pl.choirapp.demochoirapp.attendance.dto.AttendanceResponse;
 import pl.choirapp.demochoirapp.attendance.dto.UpdateAttendanceRequest;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -25,5 +27,11 @@ class AttendanceController {
             @RequestBody @Valid UpdateAttendanceRequest request
     ) {
         attendanceFacade.updateAttendance(eventId, request);
+    }
+
+    @GetMapping("/{eventId}/attendance")
+    @PreAuthorize("hasAnyRole('BOARD', 'CONDUCTOR', 'ADMIN')")
+    List<AttendanceResponse> getAttendance(@PathVariable UUID eventId) {
+        return attendanceFacade.getAttendanceForEvent(eventId);
     }
 }
