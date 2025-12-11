@@ -1,4 +1,4 @@
-package pl.choirapp.demochoirapp.infrastructure.mvc;
+package pl.choirapp.demochoirapp.infrastructure.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
