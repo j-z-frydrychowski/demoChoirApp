@@ -1,7 +1,7 @@
 package pl.choirapp.demochoirapp.event.domain;
 
 import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Lazy; // <--- WAŻNY IMPORT
 import org.springframework.stereotype.Service;
 import pl.choirapp.demochoirapp.event.dto.CreateEventRequest;
 import pl.choirapp.demochoirapp.event.dto.EventResponse;
@@ -11,12 +11,26 @@ import java.util.UUID;
 
 @Service
 @Transactional
-@RequiredArgsConstructor
+// Usuwamy @RequiredArgsConstructor, bo musimy dodać @Lazy ręcznie w konstruktorze
 class EventService {
 
     private final EventRepository eventRepository;
+
+    // Zależności z innych modułów
     private final pl.choirapp.demochoirapp.attendance.domain.AttendanceFacade attendanceFacade;
     private final pl.choirapp.demochoirapp.enrollment.domain.EnrollmentFacade enrollmentFacade;
+
+    // --- RĘCZNY KONSTRUKTOR Z @Lazy ---
+    // Dzięki @Lazy Spring przerwie cykl zależności
+    public EventService(
+            EventRepository eventRepository,
+            @Lazy pl.choirapp.demochoirapp.attendance.domain.AttendanceFacade attendanceFacade,
+            @Lazy pl.choirapp.demochoirapp.enrollment.domain.EnrollmentFacade enrollmentFacade
+    ) {
+        this.eventRepository = eventRepository;
+        this.attendanceFacade = attendanceFacade;
+        this.enrollmentFacade = enrollmentFacade;
+    }
 
     EventResponse createEvent(CreateEventRequest request) {
         Event event = Event.builder()
@@ -25,7 +39,6 @@ class EventService {
                 .startDateTime(request.startDateTime())
                 .enrollmentDeadline(request.enrollmentDeadline())
                 .build();
-
         return mapToResponse(eventRepository.save(event));
     }
 
@@ -38,24 +51,22 @@ class EventService {
     EventResponse getEventById(UUID id) {
         return eventRepository.findById(id)
                 .map(this::mapToResponse)
-                .orElseThrow(() -> new RuntimeException("Event not found with id: " + id)); // Warto zrobić własny wyjątek EventNotFoundException
+                .orElseThrow(() -> new RuntimeException("Event not found with id: " + id));
     }
 
-    // Metoda pomocnicza dla innych modułów (np. Attendance)
+    // Metoda usuwająca (to ona wywołuje cykl, ale teraz @Lazy to obsłuży)
+    void deleteEvent(UUID eventId) {
+        // 1. Czyścimy powiązane dane (Spring doładuje te beany w tym momencie)
+        attendanceFacade.deleteAllForEvent(eventId);
+        enrollmentFacade.deleteAllForEvent(eventId);
+
+        // 2. Usuwamy samo wydarzenie
+        eventRepository.deleteById(eventId);
+    }
+
     Event getEventEntity(UUID id) {
         return eventRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Event not found"));
-    }
-
-    void deleteEvent(UUID eventId) {
-        // 1. Usuń powiązane obecności (przez Fasadę)
-        attendanceFacade.deleteAllForEvent(eventId);
-
-        // 2. Usuń powiązane zapisy (przez Fasadę)
-        enrollmentFacade.deleteAllForEvent(eventId);
-
-        // 3. Usuń samo wydarzenie
-        eventRepository.deleteById(eventId);
     }
 
     private EventResponse mapToResponse(Event event) {

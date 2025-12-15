@@ -21,4 +21,8 @@ public class AttendanceFacade {
     public List<AttendanceResponse> getAttendanceForEvent(UUID eventId) {
         return attendanceService.getAttendanceForEvent(eventId);
     }
+
+    public void deleteAllForEvent(UUID eventId) {
+        attendanceService.deleteAttendanceForEvent(eventId);
+    }
 }
