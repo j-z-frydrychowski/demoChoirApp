@@ -4,20 +4,19 @@ import axios from 'axios';
 import {
     Container, Grid, Paper, Typography, TextField, Button,
     MenuItem, Select, InputLabel, FormControl, Alert,
-    List, ListItem, ListItemText, IconButton, Divider, Tabs, Tab, Box
+    List, ListItem, ListItemText, IconButton, Divider, Tabs, Tab, Box,
+    Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import MicIcon from '@mui/icons-material/Mic';
 import EventIcon from '@mui/icons-material/Event';
+import PeopleIcon from '@mui/icons-material/People'; // <--- NOWA IKONA
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 export default function AdminPanel() {
     const [tabIndex, setTabIndex] = useState(0);
     const [msg, setMsg] = useState(null);
-
-    // --- ZMIENNA DLA ODŚWIEŻANIA ---
-    // Używamy tego, żeby wymusić przeładowanie list w komponentach-dzieciach
-    const [refreshTrigger, setRefreshTrigger] = useState(0);
 
     const handleTabChange = (event, newValue) => {
         setTabIndex(newValue);
@@ -26,7 +25,6 @@ export default function AdminPanel() {
 
     const showMsg = (type, text) => {
         setMsg({ type, text });
-        // Czyścimy komunikat po 5 sekundach
         setTimeout(() => setMsg(null), 5000);
     };
 
@@ -40,24 +38,23 @@ export default function AdminPanel() {
             <Paper elevation={1} sx={{ mb: 3 }}>
                 <Tabs value={tabIndex} onChange={handleTabChange} centered variant="fullWidth">
                     <Tab icon={<EventIcon />} label="Wydarzenia" />
-                    <Tab icon={<MicIcon />} label="Emisja Głosu (Sloty)" />
+                    <Tab icon={<MicIcon />} label="Emisja (Sloty)" />
+                    <Tab icon={<PeopleIcon />} label="Chórzyści" /> {/* <--- NOWA ZAKŁADKA */}
                 </Tabs>
             </Paper>
 
             {msg && <Alert severity={msg.type} onClose={() => setMsg(null)} sx={{ mb: 2 }}>{msg.text}</Alert>}
 
-            {/* ZAWARTOŚĆ */}
-            {tabIndex === 0 ? (
-                <EventsManager showMsg={showMsg} />
-            ) : (
-                <EmissionManager showMsg={showMsg} />
-            )}
+            {/* PRZEŁĄCZANIE WIDOKÓW */}
+            {tabIndex === 0 && <EventsManager showMsg={showMsg} />}
+            {tabIndex === 1 && <EmissionManager showMsg={showMsg} />}
+            {tabIndex === 2 && <MembersManager showMsg={showMsg} />} {/* <--- NOWY KOMPONENT */}
 
         </Container>
     );
 }
 
-// --- PODKOMPONENT 1: ZARZĄDZANIE WYDARZENIAMI (To co było wcześniej) ---
+// --- 1. ZARZĄDZANIE WYDARZENIAMI ---
 function EventsManager({ showMsg }) {
     const navigate = useNavigate();
     const [events, setEvents] = useState([]);
@@ -87,7 +84,6 @@ function EventsManager({ showMsg }) {
     const handleDelete = async (id) => {
         if(!window.confirm("Usunąć wydarzenie?")) return;
         try {
-            // Uwaga: Jeśli backend nie ma DELETE, to nie zadziała, ale UI jest gotowe
             await axios.delete(`http://localhost:8080/api/events/${id}`);
             showMsg('success', 'Usunięto.');
             fetchEvents();
@@ -96,7 +92,6 @@ function EventsManager({ showMsg }) {
 
     return (
         <Grid container spacing={4}>
-            {/* KREATOR */}
             <Grid item xs={12} md={5}>
                 <Paper elevation={3} sx={{ p: 3 }}>
                     <Typography variant="h6" gutterBottom>Nowe Wydarzenie</Typography>
@@ -118,7 +113,6 @@ function EventsManager({ showMsg }) {
                     </form>
                 </Paper>
             </Grid>
-            {/* LISTA */}
             <Grid item xs={12} md={7}>
                 <Paper elevation={3} sx={{ p: 3 }}>
                     <Typography variant="h6">Kalendarz</Typography>
@@ -143,16 +137,10 @@ function EventsManager({ showMsg }) {
     );
 }
 
-// --- PODKOMPONENT 2: ZARZĄDZANIE EMISJĄ (NOWOŚĆ) ---
+// --- 2. ZARZĄDZANIE EMISJĄ ---
 function EmissionManager({ showMsg }) {
     const [slots, setSlots] = useState([]);
     const [formData, setFormData] = useState({ startTime: '', durationMinutes: 45 });
-
-    // Ponieważ backend zwraca tylko "Available slots" w endpointcie publicznym,
-    // Admin powinien widzieć WSZYSTKIE lub mieć osobny endpoint.
-    // Na razie użyjemy GET /api/emission/slots (to pokaże tylko wolne).
-    // Jeśli chcesz widzieć też zajęte, musielibyśmy dorobić endpoint w backendzie.
-    // Dla MVP wystarczy podgląd wolnych slotów które dodaliśmy.
 
     useEffect(() => { fetchSlots(); }, []);
 
@@ -166,19 +154,14 @@ function EmissionManager({ showMsg }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            // Backend oczekuje: { startTime, durationMinutes }
             await axios.post('http://localhost:8080/api/emission/slots', formData);
             showMsg('success', 'Termin emisji dodany!');
             fetchSlots();
-        } catch (err) {
-            console.error(err);
-            showMsg('error', 'Błąd tworzenia terminu.');
-        }
+        } catch (err) { showMsg('error', 'Błąd tworzenia terminu.'); }
     };
 
     return (
         <Grid container spacing={4}>
-            {/* KREATOR SLOTÓW */}
             <Grid item xs={12} md={5}>
                 <Paper elevation={3} sx={{ p: 3, borderTop: '4px solid #ed6c02' }}>
                     <Typography variant="h6" gutterBottom>Dodaj Termin Emisji</Typography>
@@ -193,28 +176,18 @@ function EmissionManager({ showMsg }) {
                             type="number" margin="normal" required
                             value={formData.durationMinutes} onChange={e => setFormData({...formData, durationMinutes: e.target.value})}
                         />
-                        <Button type="submit" variant="contained" color="warning" fullWidth sx={{ mt: 2 }} startIcon={<AddCircleIcon />}>
-                            Utwórz Termin
-                        </Button>
+                        <Button type="submit" variant="contained" color="warning" fullWidth sx={{ mt: 2 }} startIcon={<AddCircleIcon />}>Utwórz Termin</Button>
                     </form>
                 </Paper>
             </Grid>
-
-            {/* LISTA DOSTĘPNYCH SLOTÓW */}
             <Grid item xs={12} md={7}>
                 <Paper elevation={3} sx={{ p: 3 }}>
                     <Typography variant="h6" gutterBottom>Dostępne Terminy</Typography>
-                    <Typography variant="caption" color="textSecondary">
-                        (Widoczne tutaj są tylko terminy, których jeszcze nikt nie zarezerwował)
-                    </Typography>
                     <List>
                         {slots.length === 0 ? <Typography sx={{mt:2}}>Brak wolnych terminów.</Typography> : slots.map(slot => (
                             <div key={slot.id}>
                                 <ListItem>
-                                    <ListItemText
-                                        primary={new Date(slot.startTime).toLocaleString()}
-                                        secondary={`Czas trwania: ${slot.durationMinutes} min`}
-                                    />
+                                    <ListItemText primary={new Date(slot.startTime).toLocaleString()} secondary={`Czas trwania: ${slot.durationMinutes} min`} />
                                 </ListItem>
                                 <Divider />
                             </div>
@@ -223,5 +196,79 @@ function EmissionManager({ showMsg }) {
                 </Paper>
             </Grid>
         </Grid>
+    );
+}
+
+// --- 3. ZARZĄDZANIE CZŁONKAMI (NOWOŚĆ) ---
+function MembersManager({ showMsg }) {
+    const [members, setMembers] = useState([]);
+
+    useEffect(() => { fetchMembers(); }, []);
+
+    const fetchMembers = async () => {
+        try {
+            const res = await axios.get('http://localhost:8080/api/members');
+            setMembers(res.data);
+        } catch (err) { console.error(err); }
+    };
+
+    const handleActivate = async (id) => {
+        try {
+            await axios.patch(`http://localhost:8080/api/members/${id}/activate`);
+            showMsg('success', 'Użytkownik aktywowany!');
+            fetchMembers(); // Odśwież listę, żeby zmienił się status
+        } catch (err) {
+            showMsg('error', 'Nie udało się aktywować.');
+        }
+    };
+
+    return (
+        <Paper elevation={3} sx={{ p: 3 }}>
+            <Typography variant="h6" gutterBottom>Lista Chórzystów</Typography>
+            <TableContainer>
+                <Table>
+                    <TableHead>
+                        <TableRow>
+                            <TableCell>Imię i Nazwisko</TableCell>
+                            <TableCell>Email</TableCell>
+                            <TableCell>Głos</TableCell>
+                            <TableCell>Status</TableCell>
+                            <TableCell align="right">Akcja</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {members.map((member) => (
+                            <TableRow key={member.id}>
+                                <TableCell>{member.firstName} {member.lastName}</TableCell>
+                                <TableCell>{member.email}</TableCell>
+                                <TableCell>
+                                    <Chip label={member.voiceType} size="small" variant="outlined" />
+                                </TableCell>
+                                <TableCell>
+                                    <Chip
+                                        label={member.status}
+                                        color={member.status === 'ACTIVE' ? 'success' : 'warning'}
+                                        size="small"
+                                    />
+                                </TableCell>
+                                <TableCell align="right">
+                                    {member.status === 'PENDING' && (
+                                        <Button
+                                            variant="contained"
+                                            size="small"
+                                            color="success"
+                                            startIcon={<CheckCircleIcon />}
+                                            onClick={() => handleActivate(member.id)}
+                                        >
+                                            Aktywuj
+                                        </Button>
+                                    )}
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </TableContainer>
+        </Paper>
     );
 }
