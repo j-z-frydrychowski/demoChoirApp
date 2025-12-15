@@ -35,4 +35,8 @@ public class MemberFacade {
     public void activateMember(UUID id) {
         memberService.activateMember(id);
     }
+
+    public void deleteMember(UUID id) {
+        memberService.deleteMember(id);
+    }
 }

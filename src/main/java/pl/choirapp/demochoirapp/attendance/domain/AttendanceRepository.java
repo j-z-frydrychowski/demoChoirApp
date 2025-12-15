@@ -13,4 +13,6 @@ interface AttendanceRepository extends JpaRepository<Attendance, UUID> {
 
     // Potrzebne, żeby pobrać obecności (przydatne w kolejnym kroku)
     List<Attendance> findAllByEventId(UUID eventId);
+
+    void deleteAllByMemberId(UUID memberId);
 }

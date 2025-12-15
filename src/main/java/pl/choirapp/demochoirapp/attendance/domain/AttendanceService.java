@@ -91,4 +91,8 @@ class AttendanceService {
     void deleteAttendanceForEvent(UUID eventId) {
         attendanceRepository.deleteAllByEventId(eventId);
     }
+
+    void deleteAttendanceForMember(UUID memberId) {
+        attendanceRepository.deleteAllByMemberId(memberId);
+    }
 }

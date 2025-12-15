@@ -519,6 +519,15 @@ function MembersManager({ showMsg }) {
         } catch (err) { showMsg('error', 'Błąd aktywacji.'); }
     };
 
+    const handleDelete = async (id, name) => {
+        if (!window.confirm(`Czy na pewno usunąć użytkownika ${name}? Ta operacja jest nieodwracalna.`)) return;
+        try {
+            await axios.delete(`http://localhost:8080/api/members/${id}`);
+            showMsg('success', 'Użytkownik usunięty.');
+            fetchMembers();
+        } catch (err) { showMsg('error', 'Błąd usuwania.'); }
+    };
+
     const filteredMembers = members.filter(m =>
         m.lastName.toLowerCase().includes(search.toLowerCase()) ||
         m.firstName.toLowerCase().includes(search.toLowerCase()) ||
@@ -558,9 +567,14 @@ function MembersManager({ showMsg }) {
                                 <TableCell><Chip label={member.voiceType} size="small" variant="outlined" /></TableCell>
                                 <TableCell><Chip label={member.status} color={member.status === 'ACTIVE' ? 'success' : 'warning'} size="small" /></TableCell>
                                 <TableCell align="right">
-                                    {member.status === 'PENDING' && (
-                                        <Button variant="contained" size="small" color="success" startIcon={<CheckCircleIcon />} onClick={() => handleActivate(member.id)}>Aktywuj</Button>
-                                    )}
+                                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                                        {member.status === 'PENDING' && (
+                                            <Button variant="contained" size="small" color="success" startIcon={<CheckCircleIcon />} onClick={() => handleActivate(member.id)}>Aktywuj</Button>
+                                        )}
+                                        <IconButton color="error" onClick={() => handleDelete(member.id, `${member.firstName} ${member.lastName}`)}>
+                                            <DeleteIcon />
+                                        </IconButton>
+                                    </Box>
                                 </TableCell>
                             </TableRow>
                         ))}

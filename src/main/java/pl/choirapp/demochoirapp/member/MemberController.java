@@ -55,4 +55,11 @@ class MemberController {
     public void activateMember(@PathVariable UUID id) {
         memberFacade.activateMember(id);
     }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAnyRole('BOARD', 'ADMIN')")
+    public void deleteMember(@PathVariable UUID id) {
+        memberFacade.deleteMember(id);
+    }
 }

@@ -24,4 +24,8 @@ public class EnrollmentFacade {
     public void deleteAllForEvent(UUID eventId) {
         enrollmentService.deleteEnrollmentsForEvent(eventId);
     }
+
+    public void deleteAllForMember(UUID memberId) {
+        enrollmentService.deleteEnrollmentsForMember(memberId);
+    }
 }

@@ -25,4 +25,8 @@ public class AttendanceFacade {
     public void deleteAllForEvent(UUID eventId) {
         attendanceService.deleteAttendanceForEvent(eventId);
     }
+
+    public void deleteAllForMember(UUID memberId) {
+        attendanceService.deleteAttendanceForMember(memberId);
+    }
 }

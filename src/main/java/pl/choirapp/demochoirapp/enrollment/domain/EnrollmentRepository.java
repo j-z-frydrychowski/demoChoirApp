@@ -13,4 +13,6 @@ interface EnrollmentRepository extends JpaRepository<Enrollment, UUID> {
     List<Enrollment> findAllByEventId(UUID eventId);
 
     void deleteAllByEventId(UUID eventId);
+
+    void deleteAllByMemberId(UUID memberId);
 }

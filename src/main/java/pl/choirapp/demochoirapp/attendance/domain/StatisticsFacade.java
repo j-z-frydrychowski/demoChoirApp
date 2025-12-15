@@ -35,4 +35,8 @@ public class StatisticsFacade {
                 stats.getFrequencyPercentage()
         );
     }
+
+    public void deleteStatisticsForMember(UUID memberId) {
+        memberStatisticsRepository.deleteById(memberId);
+    }
 }

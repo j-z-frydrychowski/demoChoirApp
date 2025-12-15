@@ -78,4 +78,12 @@ class EmissionService {
                 slot.getMemberId()
         );
     }
+
+    void releaseSlotsForMember(UUID memberId) {
+        List<EmissionSlot> slots = emissionSlotRepository.findAllByMemberIdOrderByStartTimeAsc(memberId);
+        for (EmissionSlot slot : slots) {
+            slot.setMemberId(null);
+        }
+        emissionSlotRepository.saveAll(slots);
+    }
 }

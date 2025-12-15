@@ -32,4 +32,8 @@ public class EmissionFacade {
     public void cancelBooking(UUID slotId, UUID memberId) {
         emissionService.cancelBooking(slotId, memberId);
     }
+
+    public void releaseSlotsForMember(UUID memberId) {
+        emissionService.releaseSlotsForMember(memberId);
+    }
 }
