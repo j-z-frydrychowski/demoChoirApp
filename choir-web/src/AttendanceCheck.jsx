@@ -68,27 +68,26 @@ export default function AttendanceCheck() {
 
     const handleSave = async () => {
         try {
-            // Budujemy obiekt zgodny z Twoim BatchAttendanceUpdateRequest
-            // Backend oczekuje listy obiektów: { memberId, status }
-            // Jeśli zaznaczony -> PRESENT, jeśli nie -> ABSENT
+            // POPRAWKA: Backend oczekuje Set<UUID> w polu "presentMemberIds"
+            // Konwertujemy nasz Set z Reacta na zwykłą tablicę (Array.from)
 
-            const attendanceList = members.map(member => ({
-                memberId: member.id,
-                status: checkedIds.has(member.id) ? 'PRESENT' : 'ABSENT'
-            }));
+            const requestBody = {
+                presentMemberIds: Array.from(checkedIds)
+            };
 
-            await axios.put(`http://localhost:8080/api/attendance/events/${eventId}`, {
-                attendance: attendanceList
-            });
+            await axios.put(`http://localhost:8080/api/events/${eventId}/attendance`, requestBody);
 
             setMsg({ type: 'success', text: 'Lista obecności zapisana!' });
 
-            // Po chwili wróć do panelu
             setTimeout(() => navigate('/admin'), 1500);
 
         } catch (err) {
             console.error(err);
-            setMsg({ type: 'error', text: 'Błąd zapisu obecności.' });
+            // Wyświetl konkretny komunikat błędu z backendu, jeśli dostępny
+            setMsg({
+                type: 'error',
+                text: err.response?.data?.message || 'Błąd zapisu obecności.'
+            });
         }
     };
 
