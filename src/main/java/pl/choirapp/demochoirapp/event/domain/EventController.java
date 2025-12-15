@@ -37,4 +37,11 @@ class EventController {
     EventResponse getEvent(@PathVariable UUID id) {
         return eventFacade.getEventById(id);
     }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("hasAnyRole('BOARD', 'ADMIN')")
+    void deleteEvent(@PathVariable UUID id) {
+        eventFacade.deleteEvent(id);
+    }
 }

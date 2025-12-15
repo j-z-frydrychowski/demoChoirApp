@@ -15,6 +15,8 @@ import java.util.UUID;
 class EventService {
 
     private final EventRepository eventRepository;
+    private final pl.choirapp.demochoirapp.attendance.domain.AttendanceFacade attendanceFacade;
+    private final pl.choirapp.demochoirapp.enrollment.domain.EnrollmentFacade enrollmentFacade;
 
     EventResponse createEvent(CreateEventRequest request) {
         Event event = Event.builder()
@@ -43,6 +45,17 @@ class EventService {
     Event getEventEntity(UUID id) {
         return eventRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Event not found"));
+    }
+
+    void deleteEvent(UUID eventId) {
+        // 1. Usuń powiązane obecności (przez Fasadę)
+        attendanceFacade.deleteAllForEvent(eventId);
+
+        // 2. Usuń powiązane zapisy (przez Fasadę)
+        enrollmentFacade.deleteAllForEvent(eventId);
+
+        // 3. Usuń samo wydarzenie
+        eventRepository.deleteById(eventId);
     }
 
     private EventResponse mapToResponse(Event event) {

@@ -26,6 +26,9 @@ public class EventFacade {
         return eventService.getEventById(id);
     }
 
+    public void deleteEvent(UUID eventId) {
+        eventService.deleteEvent(eventId);
+    }
     // Ta metoda przyda się później dla modułu Attendance!
     // Ponieważ Event jest package-private, nie możemy go zwrócić na zewnątrz pakietu.
     // Ale w przyszłości Attendance będzie w innym pakiecie, więc pomyślimy o tym przy integracji.

@@ -87,4 +87,8 @@ class AttendanceService {
                 })
                 .toList();
     }
+
+    void deleteAttendanceForEvent(UUID eventId) {
+        attendanceRepository.deleteAllByEventId(eventId);
+    }
 }

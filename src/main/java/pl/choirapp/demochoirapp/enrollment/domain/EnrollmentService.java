@@ -71,4 +71,8 @@ class EnrollmentService {
                 ))
                 .toList();
     }
+
+    void deleteEnrollmentsForEvent(UUID eventId) {
+        enrollmentRepository.deleteAllByEventId(eventId);
+    }
 }

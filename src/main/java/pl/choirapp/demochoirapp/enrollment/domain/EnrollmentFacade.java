@@ -20,4 +20,8 @@ public class EnrollmentFacade {
     public List<EnrollmentResponse> getEnrollmentsForEvent(UUID eventId) {
         return enrollmentService.getEnrollmentsForEvent(eventId);
     }
+
+    public void deleteAllForEvent(UUID eventId) {
+        enrollmentService.deleteEnrollmentsForEvent(eventId);
+    }
 }

@@ -35,4 +35,8 @@ public class StatisticsFacade {
                 stats.getFrequencyPercentage()
         );
     }
+
+    public void deleteAllForEvent(UUID eventId) {
+        attendanceService.deleteAttendanceForEvent(eventId);
+    }
 }
