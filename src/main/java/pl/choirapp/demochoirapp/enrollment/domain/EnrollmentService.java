@@ -21,16 +21,17 @@ import java.util.stream.Collectors;
 class EnrollmentService {
 
     private final EnrollmentRepository enrollmentRepository;
-    private final EventFacade eventFacade; // Potrzebujemy Fasadę, żeby sprawdzić datę deadline'u
+    private final EventFacade eventFacade;
     private final MemberFacade memberFacade;
 
     void submitEnrollment(UUID eventId, UUID memberId, EnrollmentStatus status) {
-        // 1. Pobierz wydarzenie (tu musimy dodać nową metodę w EventFacade, która zwraca deadline!)
-        // Na razie załóżmy, że EventFacade.getEventById zwraca DTO z datą.
         EventResponse eventDto = eventFacade.getEventById(eventId);
 
+        // 2. Walidacja Deadline'u (Zaktualizowana)
+        if (eventDto.enrollmentDeadline() == null) {
+            throw new IllegalStateException("To wydarzenie nie obsługuje zapisów (brak deadline'u).");
+        }
 
-        // 2. Walidacja Deadline'u
         if (LocalDateTime.now().isAfter(eventDto.enrollmentDeadline())) {
             throw new IllegalStateException("Termin zapisów na to wydarzenie minął.");
         }
@@ -50,27 +51,23 @@ class EnrollmentService {
     }
 
     List<EnrollmentResponse> getEnrollmentsForEvent(UUID eventId) {
-        // 1. Sprawdź czy event istnieje
-        eventFacade.getEventById(eventId);
+        eventFacade.getEventById(eventId); // check exists
 
-        // 2. Pobierz wszystkich członków
         List<MemberResponse> allMembers = memberFacade.getAllMembers();
 
-        // 3. Pobierz istniejące zapisy i zmapuj je (MemberID -> Status)
         Map<UUID, EnrollmentStatus> enrollmentMap = enrollmentRepository.findAllByEventId(eventId).stream()
                 .collect(Collectors.toMap(
                         Enrollment::getMemberId,
                         Enrollment::getStatus
                 ));
 
-        // 4. Połącz dane
         return allMembers.stream()
                 .map(member -> new EnrollmentResponse(
                         member.id(),
                         member.firstName(),
                         member.lastName(),
                         member.voiceType(),
-                        enrollmentMap.get(member.id()) // Zwróci status lub null
+                        enrollmentMap.get(member.id())
                 ))
                 .toList();
     }

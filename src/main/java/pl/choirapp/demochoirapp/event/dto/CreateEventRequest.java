@@ -18,7 +18,6 @@ public record CreateEventRequest(
         @FutureOrPresent(message = "Data wydarzenia nie może być w przeszłości") // Przydatna walidacja!
         LocalDateTime startDateTime,
 
-        @NotNull(message = "Deadline zapisów jest wymagany")
         @FutureOrPresent
         LocalDateTime enrollmentDeadline
 

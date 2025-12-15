@@ -28,6 +28,6 @@ class Event {
     @Column(nullable = false)
     private LocalDateTime startDateTime;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private LocalDateTime enrollmentDeadline;
 }
