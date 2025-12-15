@@ -16,7 +16,8 @@ import PeopleIcon from '@mui/icons-material/People';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import SearchIcon from '@mui/icons-material/Search';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore'; // Ikona rozwijania
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import EditCalendarIcon from '@mui/icons-material/EditCalendar'; // Ikona do akcji obecności
 
 export default function AdminPanel() {
     const [tabIndex, setTabIndex] = useState(0);
@@ -33,7 +34,7 @@ export default function AdminPanel() {
     };
 
     return (
-        <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}> {/* Zmieniono na maxWidth="xl" dla szerszej tabeli */}
             <Typography variant="h4" gutterBottom fontWeight="bold" color="primary">
                 Panel Zarządu 🛠️
             </Typography>
@@ -57,7 +58,6 @@ export default function AdminPanel() {
 
             {msg && <Alert severity={msg.type} onClose={() => setMsg(null)} sx={{ mb: 2 }}>{msg.text}</Alert>}
 
-            {/* ZAWARTOŚĆ */}
             <Box sx={{ minHeight: '60vh' }}>
                 {tabIndex === 0 && <AdminOverview />}
                 {tabIndex === 1 && <EventsManager showMsg={showMsg} />}
@@ -153,20 +153,15 @@ function AdminOverview() {
     );
 }
 
-// --- 1. WYDARZENIA (ZMIENIONY) ---
+// --- 1. WYDARZENIA (TABELA) ---
 function EventsManager({ showMsg }) {
     const navigate = useNavigate();
     const [events, setEvents] = useState([]);
-
-    // Checkbox sterujący zapisami
+    const [filterType, setFilterType] = useState('ALL'); // Stan filtra
     const [enableEnrollment, setEnableEnrollment] = useState(false);
 
     const [formData, setFormData] = useState({
-        name: '',
-        type: 'REHEARSAL',
-        startDateTime: '',
-        enrollmentDeadline: ''
-        // Usunięto minAttendancePercentage
+        name: '', type: 'REHEARSAL', startDateTime: '', enrollmentDeadline: ''
     });
 
     useEffect(() => { fetchEvents(); }, []);
@@ -181,17 +176,13 @@ function EventsManager({ showMsg }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            // Jeśli zapisy wyłączone, wysyłamy null w deadline
             const payload = {
                 ...formData,
                 enrollmentDeadline: enableEnrollment ? formData.enrollmentDeadline : null
             };
-
             await axios.post('http://localhost:8080/api/events', payload);
             showMsg('success', 'Wydarzenie utworzone!');
             fetchEvents();
-
-            // Reset formularza
             setFormData({ name: '', type: 'REHEARSAL', startDateTime: '', enrollmentDeadline: '' });
             setEnableEnrollment(false);
         } catch (err) { showMsg('error', 'Błąd tworzenia.'); }
@@ -206,10 +197,33 @@ function EventsManager({ showMsg }) {
         } catch (err) { showMsg('error', 'Błąd usuwania.'); }
     };
 
+    // Helper do kolorów typów
+    const getTypeColor = (type) => {
+        switch(type) {
+            case 'CONCERT': return 'error'; // Czerwony - ważne!
+            case 'REHEARSAL': return 'primary'; // Niebieski
+            case 'WORKSHOP': return 'warning'; // Pomarańczowy
+            default: return 'default';
+        }
+    };
+
+    const getTypeLabel = (type) => {
+        switch(type) {
+            case 'REHEARSAL': return 'Próba';
+            case 'CONCERT': return 'Koncert';
+            case 'WORKSHOP': return 'Warsztaty';
+            case 'OTHER': return 'Inne';
+            default: return type;
+        }
+    };
+
+    // Logika filtrowania
+    const filteredEvents = events.filter(ev => filterType === 'ALL' || ev.type === filterType);
+
     return (
         <Grid container spacing={4}>
-            {/* LEWA KOLUMNA - KREATOR (Accordion) */}
-            <Grid item xs={12} md={5}>
+            {/* FORMULARZ (Węższy: 4 kolumny) */}
+            <Grid item xs={12} md={4}>
                 <Accordion defaultExpanded={false}>
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                         <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center' }}>
@@ -219,81 +233,107 @@ function EventsManager({ showMsg }) {
                     <AccordionDetails>
                         <form onSubmit={handleSubmit}>
                             <TextField fullWidth label="Nazwa" name="name" margin="normal" size="small" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
-
                             <FormControl fullWidth margin="normal" size="small">
                                 <InputLabel>Typ</InputLabel>
                                 <Select name="type" value={formData.type} label="Typ" onChange={e => setFormData({...formData, type: e.target.value})}>
-                                    <MenuItem value="REHEARSAL">Próba (1.0)</MenuItem>
-                                    <MenuItem value="CONCERT">Koncert (2.0)</MenuItem>
-                                    <MenuItem value="WORKSHOP">Warsztaty (1.5)</MenuItem>
-                                    <MenuItem value="OTHER">Inne (0.5)</MenuItem>
+                                    <MenuItem value="REHEARSAL">Próba</MenuItem>
+                                    <MenuItem value="CONCERT">Koncert</MenuItem>
+                                    <MenuItem value="WORKSHOP">Warsztaty</MenuItem>
+                                    <MenuItem value="OTHER">Inne</MenuItem>
                                 </Select>
                             </FormControl>
-
                             <TextField fullWidth label="Start" name="startDateTime" type="datetime-local" margin="normal" size="small" required InputLabelProps={{ shrink: true }} value={formData.startDateTime} onChange={e => setFormData({...formData, startDateTime: e.target.value})} />
 
-                            {/* CHECKBOX ZAPISY */}
                             <Box sx={{ mt: 2, mb: 1, p: 1, border: '1px dashed #ccc', borderRadius: 1 }}>
                                 <FormControlLabel
-                                    control={
-                                        <Checkbox
-                                            checked={enableEnrollment}
-                                            onChange={(e) => setEnableEnrollment(e.target.checked)}
-                                        />
-                                    }
-                                    label="Czy dodać zapisy na wydarzenie?"
+                                    control={<Checkbox checked={enableEnrollment} onChange={(e) => setEnableEnrollment(e.target.checked)} />}
+                                    label="Włącz zapisy?"
                                 />
-
                                 {enableEnrollment && (
-                                    <TextField
-                                        fullWidth
-                                        label="Deadline zapisów"
-                                        name="enrollmentDeadline"
-                                        type="datetime-local"
-                                        margin="normal"
-                                        size="small"
-                                        required={enableEnrollment} // Wymagane tylko jak włączone
-                                        InputLabelProps={{ shrink: true }}
-                                        value={formData.enrollmentDeadline}
-                                        onChange={e => setFormData({...formData, enrollmentDeadline: e.target.value})}
-                                    />
+                                    <TextField fullWidth label="Deadline" name="enrollmentDeadline" type="datetime-local" margin="normal" size="small" required={enableEnrollment} InputLabelProps={{ shrink: true }} value={formData.enrollmentDeadline} onChange={e => setFormData({...formData, enrollmentDeadline: e.target.value})} />
                                 )}
                             </Box>
-
                             <Button type="submit" variant="contained" fullWidth sx={{ mt: 2 }}>Zapisz</Button>
                         </form>
                     </AccordionDetails>
                 </Accordion>
             </Grid>
 
-            {/* PRAWA KOLUMNA - LISTA */}
-            <Grid item xs={12} md={7}>
+            {/* TABELA (Szersza: 8 kolumn) */}
+            <Grid item xs={12} md={8}>
                 <Paper elevation={3} sx={{ p: 3 }}>
-                    <Typography variant="h6" gutterBottom>Kalendarz</Typography>
-                    <List sx={{ maxHeight: 600, overflow: 'auto' }}>
-                        {events.map(ev => (
-                            <div key={ev.id}>
-                                <ListItem secondaryAction={
-                                    <Box>
-                                        <Button variant="outlined" size="small" onClick={() => navigate(`/admin/attendance/${ev.id}`)} sx={{mr:1}}>Obecność</Button>
-                                        <IconButton color="error" onClick={() => handleDelete(ev.id)}><DeleteIcon /></IconButton>
-                                    </Box>
-                                }>
-                                    <ListItemText
-                                        primary={ev.name}
-                                        secondary={
-                                            <>
-                                                {new Date(ev.startDateTime).toLocaleDateString()} {new Date(ev.startDateTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
-                                                <Chip label={ev.type} size="small" sx={{ ml: 1, height: 20, fontSize: '0.7rem' }} />
-                                                {!ev.enrollmentDeadline && <Chip label="Bez zapisów" size="small" color="default" variant="outlined" sx={{ ml: 1, height: 20, fontSize: '0.7rem' }} />}
-                                            </>
-                                        }
-                                    />
-                                </ListItem>
-                                <Divider />
-                            </div>
-                        ))}
-                    </List>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                        <Typography variant="h6">Lista Wydarzeń</Typography>
+
+                        {/* FILTR TYPÓW */}
+                        <FormControl size="small" sx={{ minWidth: 150 }}>
+                            <InputLabel>Filtruj Typ</InputLabel>
+                            <Select
+                                value={filterType}
+                                label="Filtruj Typ"
+                                onChange={(e) => setFilterType(e.target.value)}
+                            >
+                                <MenuItem value="ALL">Wszystkie</MenuItem>
+                                <MenuItem value="REHEARSAL">Próba</MenuItem>
+                                <MenuItem value="CONCERT">Koncert</MenuItem>
+                                <MenuItem value="WORKSHOP">Warsztaty</MenuItem>
+                                <MenuItem value="OTHER">Inne</MenuItem>
+                            </Select>
+                        </FormControl>
+                    </Box>
+
+                    <TableContainer sx={{ maxHeight: 650 }}>
+                        <Table stickyHeader size="small">
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>Data</TableCell>
+                                    <TableCell>Godzina</TableCell>
+                                    <TableCell>Nazwa</TableCell>
+                                    <TableCell>Typ</TableCell>
+                                    <TableCell>Zapisy do</TableCell>
+                                    <TableCell align="right">Akcje</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {filteredEvents.map(ev => (
+                                    <TableRow key={ev.id} hover>
+                                        <TableCell>{new Date(ev.startDateTime).toLocaleDateString()}</TableCell>
+                                        <TableCell>{new Date(ev.startDateTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold' }}>{ev.name}</TableCell>
+                                        <TableCell>
+                                            <Chip
+                                                label={getTypeLabel(ev.type)}
+                                                size="small"
+                                                color={getTypeColor(ev.type)}
+                                                variant={ev.type === 'REHEARSAL' ? 'outlined' : 'filled'} // Próby lżejsze wizualnie
+                                            />
+                                        </TableCell>
+                                        <TableCell>
+                                            {ev.enrollmentDeadline
+                                                ? new Date(ev.enrollmentDeadline).toLocaleDateString()
+                                                : <Typography variant="caption" color="textSecondary">-</Typography>
+                                            }
+                                        </TableCell>
+                                        <TableCell align="right">
+                                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                                                <Button
+                                                    variant="outlined"
+                                                    size="small"
+                                                    startIcon={<EditCalendarIcon />}
+                                                    onClick={() => navigate(`/admin/attendance/${ev.id}`)}
+                                                >
+                                                    Obecność
+                                                </Button>
+                                                <IconButton size="small" color="error" onClick={() => handleDelete(ev.id)}>
+                                                    <DeleteIcon />
+                                                </IconButton>
+                                            </Box>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
                 </Paper>
             </Grid>
         </Grid>
