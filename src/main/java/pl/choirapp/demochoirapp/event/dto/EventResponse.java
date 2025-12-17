@@ -9,5 +9,6 @@ public record EventResponse(
         String name,
         EventType type,
         LocalDateTime startDateTime,
-        LocalDateTime enrollmentDeadline
+        LocalDateTime enrollmentDeadline,
+        boolean hidden
 ) {}

@@ -30,4 +30,6 @@ class Event {
 
     @Column(nullable = true)
     private LocalDateTime enrollmentDeadline;
+
+    private boolean hidden;
 }

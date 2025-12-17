@@ -1,25 +1,22 @@
 package pl.choirapp.demochoirapp.member.domain;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
+import java.time.LocalDate;
+import java.time.Period; // Do liczenia stażu
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-import pl.choirapp.demochoirapp.member.domain.MemberRole;
-import pl.choirapp.demochoirapp.member.domain.VoiceType;
-
-@Entity // mapowanie klasy na bazę danych
-@Table(name = "members") // nazwa tabeli w bazie danych
+@Entity
+@Table(name = "members")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-
-public class Member {
+@Builder
+class Member {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -31,34 +28,46 @@ public class Member {
     @Column(nullable = false)
     private String lastName;
 
-    @Column(nullable = false, unique = true) //email musi być unikalny
+    @Column(nullable = false, unique = true)
     private String email;
 
     @Column(nullable = false)
-    private String password; //będzie dodany hash hasła
+    private String password;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private VoiceType voiceType;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)
-    private Set<MemberRole> roles; //dodajemy w ten sposob bo jeden uzytkownik moze miec wiecej niz jedna role
+    private Set<MemberRole> roles = new HashSet<>();
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private MemberStatus status;
 
-    static Member create(String firstName, String lastName, String email, String password, VoiceType voiceType) {
-        Member member = new Member();
-        member.setFirstName(firstName);
-        member.setLastName(lastName);
-        member.setEmail(email);
-        member.setPassword(password);
-        member.setVoiceType(voiceType);
-        member.setStatus(MemberStatus.PENDING);
-        member.setRoles(Set.of(MemberRole.CHORISTER));
-        return member;
+    // --- NOWE POLA ---
+    private String phoneNumber;
+    private String facebookUrl;
+    private LocalDate joinedDate;
+
+    // --- LOGIKA BIZNESOWA ---
+
+    // Czy jest seniorem? (> 7 lat stażu)
+    public boolean isSenior() {
+        if (joinedDate == null) return false;
+        return Period.between(joinedDate, LocalDate.now()).getYears() >= 7;
     }
 
-
+    public static Member create(String firstName, String lastName, String email, String password, VoiceType voiceType) {
+        return Member.builder()
+                .firstName(firstName)
+                .lastName(lastName)
+                .email(email)
+                .password(password)
+                .voiceType(voiceType)
+                .status(MemberStatus.PENDING)
+                .roles(Set.of(MemberRole.CHORISTER))
+                .build();
+    }
 }

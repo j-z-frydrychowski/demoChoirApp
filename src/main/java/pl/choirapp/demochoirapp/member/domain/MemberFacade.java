@@ -2,6 +2,7 @@ package pl.choirapp.demochoirapp.member.domain;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.web.multipart.MultipartFile;
 import pl.choirapp.demochoirapp.member.dto.*;
 
 import java.util.List;
@@ -11,6 +12,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class MemberFacade {
     private final MemberService memberService;
+    private final MemberImportService memberImportService;
 
     public UUID registerMember(MemberRegisterRequest request) {
         return memberService.registerMember(request);
@@ -38,5 +40,9 @@ public class MemberFacade {
 
     public void deleteMember(UUID id) {
         memberService.deleteMember(id);
+    }
+
+    public void importMembers(MultipartFile file) {
+        memberImportService.importMembers(file);
     }
 }

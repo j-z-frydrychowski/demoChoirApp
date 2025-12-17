@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import pl.choirapp.demochoirapp.member.domain.MemberFacade;
 import pl.choirapp.demochoirapp.member.dto.MemberRegisterRequest;
 import pl.choirapp.demochoirapp.member.dto.MemberLoginRequest;
@@ -61,5 +62,13 @@ class MemberController {
     @PreAuthorize("hasAnyRole('BOARD', 'ADMIN')")
     public void deleteMember(@PathVariable UUID id) {
         memberFacade.deleteMember(id);
+    }
+
+    @PostMapping(value = "/import")
+    @ResponseStatus(HttpStatus.CREATED)
+    // ZMIANA: hasAnyAuthority sprawdza dokładną nazwę enuma w bazie (ADMIN), a nie ROLE_ADMIN
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'BOARD')")
+    public void importMembers(@RequestParam("file") MultipartFile file) {
+        memberFacade.importMembers(file);
     }
 }

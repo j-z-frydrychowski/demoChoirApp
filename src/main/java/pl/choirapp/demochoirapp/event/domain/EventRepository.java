@@ -7,4 +7,6 @@ import java.util.UUID;
 interface EventRepository extends JpaRepository<Event, UUID> {
     // Chcemy pobierać wydarzenia chronologicznie
     List<Event> findAllByOrderByStartDateTimeDesc();
+
+    List<Event> findAllByHiddenFalseOrderByStartDateTimeDesc();
 }

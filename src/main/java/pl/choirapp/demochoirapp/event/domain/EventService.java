@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Lazy; // <--- WAŻNY IMPORT
 import org.springframework.stereotype.Service;
 import pl.choirapp.demochoirapp.event.dto.CreateEventRequest;
 import pl.choirapp.demochoirapp.event.dto.EventResponse;
+import pl.choirapp.demochoirapp.event.dto.UpdateEventRequest;
 
 import java.util.List;
 import java.util.UUID;
@@ -42,8 +43,28 @@ class EventService {
         return mapToResponse(eventRepository.save(event));
     }
 
-    List<EventResponse> getAllEvents() {
-        return eventRepository.findAllByOrderByStartDateTimeDesc().stream()
+    EventResponse updateEvent(UUID id, UpdateEventRequest request) {
+        Event event = eventRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Event not found"));
+
+        event.setName(request.name());
+        event.setType(request.type());
+        event.setStartDateTime(request.startDateTime());
+        event.setEnrollmentDeadline(request.enrollmentDeadline());
+        event.setHidden(request.hidden());
+
+        return mapToResponse(eventRepository.save(event));
+    }
+
+    List<EventResponse> getAllEvents(boolean includeHidden) {
+        List<Event> events;
+        if (includeHidden) {
+            events = eventRepository.findAllByOrderByStartDateTimeDesc();
+        } else {
+            events = eventRepository.findAllByHiddenFalseOrderByStartDateTimeDesc();
+        }
+
+        return events.stream()
                 .map(this::mapToResponse)
                 .toList();
     }
@@ -75,7 +96,8 @@ class EventService {
                 event.getName(),
                 event.getType(),
                 event.getStartDateTime(),
-                event.getEnrollmentDeadline()
+                event.getEnrollmentDeadline(),
+                event.isHidden()
         );
     }
 }

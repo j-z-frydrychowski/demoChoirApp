@@ -126,7 +126,11 @@ class MemberService {
                 member.getEmail(),
                 member.getVoiceType(),
                 member.getRoles(),
-                member.getStatus()
+                member.getStatus(),
+                member.getPhoneNumber(),     // Nowe
+                member.getFacebookUrl(),     // Nowe
+                member.getJoinedDate(),      // Nowe
+                member.isSenior()            // Nowe (wyliczone)
         );
     }
 }

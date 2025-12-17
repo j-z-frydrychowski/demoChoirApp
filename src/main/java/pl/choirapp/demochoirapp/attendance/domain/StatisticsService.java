@@ -13,16 +13,15 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class StatisticsService { // Musi być public, żeby AttendanceService go widział (jeśli są w różnych plikach)
+public class StatisticsService {
 
     private final AttendanceRepository attendanceRepository;
     private final EventFacade eventFacade;
-    private final MemberStatisticsRepository memberStatisticsRepository; // Teraz to zadziała!
+    private final MemberStatisticsRepository memberStatisticsRepository;
 
     private LocalDateTime getSeasonStartDate() {
         LocalDate today = LocalDate.now();
         int year = today.getYear();
-        // Jeśli jest przed wrześniem (np. styczeń 2025), to sezon zaczął się w 2024
         if (today.getMonthValue() < 9) {
             year--;
         }
@@ -34,7 +33,8 @@ public class StatisticsService { // Musi być public, żeby AttendanceService go
         LocalDateTime seasonStart = getSeasonStartDate();
 
         // 1. Pobierz wydarzenia z sezonu
-        List<EventResponse> events = eventFacade.getAllEvents().stream()
+        // POPRAWKA: Przekazujemy 'true', aby pobrać WSZYSTKIE wydarzenia (również ukryte)
+        List<EventResponse> events = eventFacade.getAllEvents(true).stream()
                 .filter(e -> e.startDateTime().isAfter(seasonStart))
                 .toList();
 
@@ -79,7 +79,7 @@ public class StatisticsService { // Musi być public, żeby AttendanceService go
 
             double frequency = (possiblePoints > 0) ? (earnedPoints / possiblePoints) * 100.0 : 0.0;
 
-            // ZAPIS DO BAZY (Upsert: Update or Insert)
+            // ZAPIS DO BAZY (Upsert)
             MemberStatistics stats = memberStatisticsRepository.findById(memberId)
                     .orElse(MemberStatistics.builder().memberId(memberId).build());
 

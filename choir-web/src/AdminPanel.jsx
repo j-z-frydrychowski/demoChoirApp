@@ -129,23 +129,28 @@ function AdminOverview() {
     );
 }
 
-// --- 1. WYDARZENIA (Z MENU "TRZY KROPKI") ---
+// --- 1. WYDARZENIA ---
 function EventsManager({ showMsg }) {
     const navigate = useNavigate();
     const [events, setEvents] = useState([]);
     const [filterType, setFilterType] = useState('ALL');
-    const [enableEnrollment, setEnableEnrollment] = useState(false);
 
-    // Menu State
+    // --- STANY DLA FORMULARZA ---
+    const [isEditing, setIsEditing] = useState(false);
+    const [editId, setEditId] = useState(null);
+    const [isFormExpanded, setIsFormExpanded] = useState(false);
+
+    // Checkboxy
+    const [enableEnrollment, setEnableEnrollment] = useState(false);
+    const [isHidden, setIsHidden] = useState(false); // NOWOŚĆ
+
+    // Menu
     const [anchorEl, setAnchorEl] = useState(null);
     const [selectedEventId, setSelectedEventId] = useState(null);
 
     const [formData, setFormData] = useState({
         name: '', type: 'REHEARSAL', startDateTime: '', enrollmentDeadline: ''
     });
-
-    // Formularz (Accordion) state
-    const [isFormExpanded, setIsFormExpanded] = useState(false);
 
     useEffect(() => { fetchEvents(); }, []);
 
@@ -156,16 +161,24 @@ function EventsManager({ showMsg }) {
         } catch (err) { console.error(err); }
     };
 
-    // Menu Handlers
+    // --- RESETOWANIE FORMULARZA ---
+    const resetForm = () => {
+        setFormData({ name: '', type: 'REHEARSAL', startDateTime: '', enrollmentDeadline: '' });
+        setEnableEnrollment(false);
+        setIsHidden(false);
+        setIsEditing(false);
+        setEditId(null);
+        setIsFormExpanded(false);
+    };
+
+    // --- MENU AKCJI ---
     const handleMenuOpen = (event, id) => {
         setAnchorEl(event.currentTarget);
         setSelectedEventId(id);
     };
-    const handleMenuClose = () => {
-        setAnchorEl(null);
-        setSelectedEventId(null);
-    };
+    const handleMenuClose = () => { setAnchorEl(null); setSelectedEventId(null); };
 
+    // --- ŁADOWANIE DANYCH DO EDYCJI ---
     const handleActionEdit = () => {
         const eventToEdit = events.find(e => e.id === selectedEventId);
         if (eventToEdit) {
@@ -176,8 +189,12 @@ function EventsManager({ showMsg }) {
                 enrollmentDeadline: eventToEdit.enrollmentDeadline || ''
             });
             setEnableEnrollment(!!eventToEdit.enrollmentDeadline);
-            setIsFormExpanded(true); // Otwórz formularz
-            showMsg('info', 'Dane załadowane do formularza. (Tryb edycji wymaga wdrożenia PUT na backendzie)');
+            setIsHidden(eventToEdit.hidden); // Ustawiamy flagę ukrycia
+
+            // Ustawiamy tryb edycji
+            setIsEditing(true);
+            setEditId(selectedEventId);
+            setIsFormExpanded(true); // Otwieramy harmonijkę
         }
         handleMenuClose();
     };
@@ -188,10 +205,7 @@ function EventsManager({ showMsg }) {
     };
 
     const handleActionDelete = async () => {
-        if(!window.confirm("Usunąć wydarzenie trwale?")) {
-            handleMenuClose();
-            return;
-        }
+        if(!window.confirm("Usunąć wydarzenie trwale?")) { handleMenuClose(); return; }
         try {
             await axios.delete(`http://localhost:8080/api/events/${selectedEventId}`);
             showMsg('success', 'Usunięto.');
@@ -200,34 +214,43 @@ function EventsManager({ showMsg }) {
         handleMenuClose();
     };
 
+    // --- WYSYŁKA FORMULARZA (CREATE / UPDATE) ---
     const handleSubmit = async (e) => {
         e.preventDefault();
+        const payload = {
+            ...formData,
+            enrollmentDeadline: enableEnrollment ? formData.enrollmentDeadline : null,
+            hidden: isHidden
+        };
+
         try {
-            const payload = {
-                ...formData,
-                enrollmentDeadline: enableEnrollment ? formData.enrollmentDeadline : null
-            };
-            await axios.post('http://localhost:8080/api/events', payload);
-            showMsg('success', 'Wydarzenie zapisane!');
+            if (isEditing) {
+                // UPDATE (PUT)
+                await axios.put(`http://localhost:8080/api/events/${editId}`, payload);
+                showMsg('success', 'Zaktualizowano wydarzenie!');
+            } else {
+                // CREATE (POST)
+                await axios.post('http://localhost:8080/api/events', payload);
+                showMsg('success', 'Utworzono wydarzenie!');
+            }
             fetchEvents();
-            setFormData({ name: '', type: 'REHEARSAL', startDateTime: '', enrollmentDeadline: '' });
-            setEnableEnrollment(false);
-            setIsFormExpanded(false);
+            resetForm();
         } catch (err) { showMsg('error', 'Błąd zapisu.'); }
     };
 
-    // Helpery
+    // Helpery wizualne
     const getTypeColor = (type) => ({'CONCERT':'error','REHEARSAL':'primary','WORKSHOP':'warning'}[type] || 'default');
     const filteredEvents = events.filter(ev => filterType === 'ALL' || ev.type === filterType);
 
     return (
         <Grid container spacing={4}>
-            {/* KREATOR */}
+            {/* KREATOR / EDYTOR */}
             <Grid item xs={12} md={4}>
                 <Accordion expanded={isFormExpanded} onChange={() => setIsFormExpanded(!isFormExpanded)}>
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                        <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center' }}>
-                            <AddCircleIcon sx={{ mr: 1 }} /> Dodaj / Edytuj
+                        <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', color: isEditing ? 'warning.main' : 'inherit' }}>
+                            <AddCircleIcon sx={{ mr: 1 }} />
+                            {isEditing ? "Edytuj Wydarzenie" : "Dodaj Wydarzenie"}
                         </Typography>
                     </AccordionSummary>
                     <AccordionDetails>
@@ -244,13 +267,36 @@ function EventsManager({ showMsg }) {
                             </FormControl>
                             <TextField fullWidth label="Start" name="startDateTime" type="datetime-local" margin="normal" size="small" required InputLabelProps={{ shrink: true }} value={formData.startDateTime} onChange={e => setFormData({...formData, startDateTime: e.target.value})} />
 
-                            <Box sx={{ mt: 2, mb: 1, p: 1, border: '1px dashed #ccc', borderRadius: 1 }}>
-                                <FormControlLabel control={<Checkbox checked={enableEnrollment} onChange={(e) => setEnableEnrollment(e.target.checked)} />} label="Włącz zapisy?" />
+                            {/* OPCJE DODATKOWE */}
+                            <Box sx={{ mt: 2, p: 1, border: '1px dashed #ccc', borderRadius: 1 }}>
+                                <FormControlLabel
+                                    control={<Checkbox checked={enableEnrollment} onChange={(e) => setEnableEnrollment(e.target.checked)} />}
+                                    label="Włącz zapisy?"
+                                />
                                 {enableEnrollment && (
                                     <TextField fullWidth label="Deadline" name="enrollmentDeadline" type="datetime-local" margin="normal" size="small" required={enableEnrollment} InputLabelProps={{ shrink: true }} value={formData.enrollmentDeadline} onChange={e => setFormData({...formData, enrollmentDeadline: e.target.value})} />
                                 )}
+
+                                {/* NOWY CHECKBOX - UKRYCIE */}
+                                <Divider sx={{ my: 1 }} />
+                                <FormControlLabel
+                                    control={<Checkbox checked={isHidden} onChange={(e) => setIsHidden(e.target.checked)} color="error" />}
+                                    label={
+                                        <Typography variant="body2" color={isHidden ? "error" : "textSecondary"}>
+                                            Ukryte wydarzenie (tylko Zarząd)
+                                        </Typography>
+                                    }
+                                />
                             </Box>
-                            <Button type="submit" variant="contained" fullWidth sx={{ mt: 2 }}>Zapisz</Button>
+
+                            <Box sx={{ mt: 2, display: 'flex', gap: 1 }}>
+                                <Button type="submit" variant="contained" fullWidth color={isEditing ? "warning" : "primary"}>
+                                    {isEditing ? "Zapisz Zmiany" : "Utwórz"}
+                                </Button>
+                                {isEditing && (
+                                    <Button variant="outlined" onClick={resetForm}>Anuluj</Button>
+                                )}
+                            </Box>
                         </form>
                     </AccordionDetails>
                 </Accordion>
@@ -284,21 +330,23 @@ function EventsManager({ showMsg }) {
                             </TableHead>
                             <TableBody>
                                 {filteredEvents.map(ev => (
-                                    <TableRow key={ev.id} hover>
+                                    <TableRow key={ev.id} hover sx={{ backgroundColor: ev.hidden ? 'rgba(0, 0, 0, 0.04)' : 'inherit' }}>
                                         <TableCell>
                                             {new Date(ev.startDateTime).toLocaleDateString()} <br/>
                                             <Typography variant="caption" color="textSecondary">
                                                 {new Date(ev.startDateTime).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
                                             </Typography>
                                         </TableCell>
-                                        <TableCell sx={{ fontWeight: 'bold' }}>{ev.name}</TableCell>
+                                        <TableCell sx={{ fontWeight: 'bold' }}>
+                                            {ev.name}
+                                            {/* IKONKA UKRYCIA */}
+                                            {ev.hidden && (
+                                                <Chip label="Ukryte" size="small" color="default" sx={{ ml: 1, height: 18, fontSize: '0.6rem' }} />
+                                            )}
+                                        </TableCell>
                                         <TableCell><Chip label={ev.type} size="small" color={getTypeColor(ev.type)} variant="outlined" /></TableCell>
                                         <TableCell>
-                                            {ev.enrollmentDeadline ? (
-                                                <Chip label="Tak" size="small" color="success" icon={<CheckCircleIcon />} />
-                                            ) : (
-                                                <Typography variant="caption" color="textSecondary">-</Typography>
-                                            )}
+                                            {ev.enrollmentDeadline ? <Chip label="Tak" size="small" color="success" icon={<CheckCircleIcon />} /> : "-"}
                                         </TableCell>
                                         <TableCell align="right">
                                             <IconButton size="small" onClick={(e) => handleMenuOpen(e, ev.id)}>
@@ -311,7 +359,6 @@ function EventsManager({ showMsg }) {
                         </Table>
                     </TableContainer>
 
-                    {/* MENU KONTEKSTOWE */}
                     <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
                         <MenuItem onClick={handleActionEdit}>
                             <ListItemIcon><EditIcon fontSize="small" /></ListItemIcon> Edytuj
@@ -534,19 +581,60 @@ function MembersManager({ showMsg }) {
         m.email.toLowerCase().includes(search.toLowerCase())
     );
 
+    const handleFileUpload = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        // 1. Pobieramy token
+        const token = localStorage.getItem('token');
+        if (!token) {
+            showMsg('error', 'Błąd: Brak tokena. Zaloguj się ponownie.');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            // 2. Wysyłamy BEZ ustawiania ręcznego Content-Type (Axios sam to zrobi lepiej)
+            // Ale Z nagłówkiem Authorization
+            await axios.post('http://localhost:8080/api/members/import', formData, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            showMsg('success', 'Zaimportowano pomyślnie! Hasło domyślne: Choir2025!');
+            fetchMembers();
+            event.target.value = null; // Reset inputa
+        } catch (err) {
+            console.error("Upload error:", err);
+            if (err.response && err.response.status === 403) {
+                showMsg('error', 'Błąd 403: Brak uprawnień. (Czy twoja rola to ADMIN lub BOARD?)');
+            } else {
+                showMsg('error', 'Błąd importu. Sprawdź plik.');
+            }
+        }
+    };
+
     return (
         <Paper elevation={3} sx={{ p: 3 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                 <Typography variant="h6">Baza Członków ({members.length})</Typography>
-                <TextField
-                    size="small"
-                    placeholder="Szukaj..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    InputProps={{
-                        startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment>,
-                    }}
-                />
+
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                    {/* INPUT UKRYTY + PRZYCISK */}
+                    <Button variant="contained" component="label" startIcon={<AddCircleIcon />}>
+                        Importuj CSV
+                        <input hidden accept=".csv" type="file" onChange={handleFileUpload} />
+                    </Button>
+
+                    <TextField
+                        size="small"
+                        placeholder="Szukaj..."
+                        value={search}
+                        // ... reszta propsów search ...
+                    />
+                </Box>
             </Box>
             <TableContainer sx={{ maxHeight: 500 }}>
                 <Table stickyHeader>

@@ -4,10 +4,12 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.bind.annotation.*;
-import pl.choirapp.demochoirapp.event.domain.EventFacade;
 import pl.choirapp.demochoirapp.event.dto.CreateEventRequest;
 import pl.choirapp.demochoirapp.event.dto.EventResponse;
+import pl.choirapp.demochoirapp.event.dto.UpdateEventRequest;
 
 import java.util.List;
 import java.util.UUID;
@@ -26,10 +28,24 @@ class EventController {
         return eventFacade.createEvent(request);
     }
 
+    @PutMapping("/{id}") // --- NOWOŚĆ: EDYCJA ---
+    @PreAuthorize("hasAnyRole('BOARD', 'CONDUCTOR', 'ADMIN')")
+    EventResponse updateEvent(@PathVariable UUID id, @RequestBody @Valid UpdateEventRequest request) {
+        return eventFacade.updateEvent(id, request);
+    }
+
     @GetMapping
-    @PreAuthorize("isAuthenticated()") // Każdy zalogowany może widzieć kalendarz
-    List<EventResponse> getAllEvents() {
-        return eventFacade.getAllEvents();
+    @PreAuthorize("isAuthenticated()")
+    List<EventResponse> getAllEvents(Authentication authentication) {
+        // Sprawdzamy, czy użytkownik ma uprawnienia do widzenia ukrytych (Zarząd/Admin/Dyrygent)
+        boolean isPrivileged = authentication.getAuthorities().stream()
+                .anyMatch(a ->
+                        a.getAuthority().equals("ROLE_ADMIN") ||
+                                a.getAuthority().equals("ROLE_BOARD") ||
+                                a.getAuthority().equals("ROLE_CONDUCTOR")
+                );
+
+        return eventFacade.getAllEvents(isPrivileged);
     }
 
     @GetMapping("/{id}")

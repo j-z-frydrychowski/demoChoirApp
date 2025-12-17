@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import pl.choirapp.demochoirapp.event.dto.CreateEventRequest;
 import pl.choirapp.demochoirapp.event.dto.EventResponse;
+import pl.choirapp.demochoirapp.event.dto.UpdateEventRequest;
 
 import java.util.List;
 import java.util.UUID;
@@ -18,8 +19,12 @@ public class EventFacade {
         return eventService.createEvent(request);
     }
 
-    public List<EventResponse> getAllEvents() {
-        return eventService.getAllEvents();
+    public EventResponse updateEvent(UUID id, UpdateEventRequest request) {
+        return eventService.updateEvent(id, request);
+    }
+
+    public List<EventResponse> getAllEvents(boolean includeHidden) {
+        return eventService.getAllEvents(includeHidden);
     }
 
     public EventResponse getEventById(UUID id) {
@@ -29,8 +34,4 @@ public class EventFacade {
     public void deleteEvent(UUID eventId) {
         eventService.deleteEvent(eventId);
     }
-    // Ta metoda przyda się później dla modułu Attendance!
-    // Ponieważ Event jest package-private, nie możemy go zwrócić na zewnątrz pakietu.
-    // Ale w przyszłości Attendance będzie w innym pakiecie, więc pomyślimy o tym przy integracji.
-    // Na razie wystarczy to co wyżej.
 }
